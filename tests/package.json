@@ -1,0 +1,17 @@
+{
+  "name": "physioguard-tests",
+  "version": "1.0.0",
+  "description": "E2E tests for PhysioGuard using Playwright",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:api": "playwright test e2e/api.spec.js",
+    "test:deployment": "playwright test e2e/deployment.spec.js",
+    "test:report": "playwright show-report",
+    "install:browsers": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.41.0"
+  }
+}

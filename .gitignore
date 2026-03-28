@@ -1,0 +1,45 @@
+# Environment
+.env
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Logs
+logs/*.log
+logs/*.jsonl
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+.docker/
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/*.tfvars
+!terraform/*.tfvars.example
+
+# Test artifacts
+tests/node_modules/
+tests/test-results/
+tests/playwright-report/

@@ -1,0 +1,11 @@
+# Copy this to terraform.tfvars and fill in your values
+aws_region    = "ap-south-1"
+app_name      = "physioguard"
+environment   = "production"
+desired_count = 2
+min_count     = 2
+max_count     = 10
+
+# Optional: Set if you have a custom domain
+# domain_name     = "physioguard.yourdomain.com"
+# certificate_arn = "arn:aws:acm:ap-south-1:ACCOUNT_ID:certificate/CERT_ID"

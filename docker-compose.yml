@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  physioguard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: physioguard
+    restart: unless-stopped
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-change-this-in-production}
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - GUNICORN_WORKERS=${GUNICORN_WORKERS:-4}
+      - GUNICORN_THREADS=${GUNICORN_THREADS:-4}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - physio_net
+
+  nginx:
+    image: nginx:alpine
+    container_name: physio_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./reference_images:/app/reference_images:ro
+    depends_on:
+      physioguard:
+        condition: service_healthy
+    networks:
+      - physio_net
+
+networks:
+  physio_net:
+    driver: bridge
