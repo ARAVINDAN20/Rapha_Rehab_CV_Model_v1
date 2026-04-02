@@ -142,7 +142,7 @@ export async function startMonitoring() {
 // ============================================
 // Stop Monitoring
 // ============================================
-export function stopMonitoring() {
+export async function stopMonitoring() {
     isMonitoring = false;
 
     // Cancel animation frame
@@ -159,6 +159,57 @@ export function stopMonitoring() {
 
     // Get session summary
     const summary = postureAnalyzer.getSessionSummary();
+
+    // AUTO-SYNC TO REHAB BACKEND
+    // Pull the embedded credentials mapped from the patient dashboard URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const planId = urlParams.get('plan_id');
+    const dbExerciseId = urlParams.get('exercise_id');
+
+    if (token && planId && dbExerciseId) {
+        try {
+            const apiRes = await fetch("http://localhost:3002/api/patient/exercise-performance", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    exercise_id: parseInt(dbExerciseId),
+                    treatment_plan_id: parseInt(planId),
+                    performed_date: new Date().toISOString().split('T')[0],
+                    sets: 1, // Defaulting AI trials to 1 continuous set
+                    reps: summary.totalReps || 0,
+                    duration: Math.round((summary.totalFrames || 0) / 30 / 60) || 1, // approx converting frames (30fps) to minutes
+                    pain_level: 0,
+                    notes: `AI Managed. Avg Form Accuracy: ${Math.round(summary.avgScore || 0)}%`
+                })
+            });
+
+            if (apiRes.ok) {
+                showToast("Exercise successfully synced to your profile!");
+            } else {
+                console.error("Failed to sync AI log:", await apiRes.text());
+                showToast("Finished, but could not sync progress to profile.");
+            }
+        } catch (error) {
+            console.error("Network error syncing AI log:", error);
+        }
+    } else {
+        // Fallback to local server logging if launched autonomously
+        fetch('/api/save_session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                exercise: document.getElementById('exerciseSelect').value,
+                reps: summary.totalReps || 0,
+                avg_score: summary.avgScore || 0,
+                best_score: summary.bestScore || 0,
+                duration_seconds: Math.round((summary.totalFrames || 0) / 30) // Assuming 30fps
+            })
+        }).catch(err => console.error("Error saving session locally:", err));
+    }
 
     // Update UI
     videoEl.style.display = 'none';
@@ -306,7 +357,7 @@ function updateFeedbackDisplay(analysis) {
 
         const icon = fb.status === PostureStatus.CORRECT ? '✅'
             : fb.status === PostureStatus.MINOR_ISSUE ? '⚠️'
-            : fb.status === PostureStatus.MAJOR_ISSUE ? '❌' : '🚫';
+                : fb.status === PostureStatus.MAJOR_ISSUE ? '❌' : '🚫';
 
         item.innerHTML = `
             <div class="joint-name">${icon} ${fb.jointName}</div>
